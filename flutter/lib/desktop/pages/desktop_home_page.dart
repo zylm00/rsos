@@ -1,6 +1,3 @@
-// desktop_home_page.dart
-// Windows 版本仅保留右侧面板（ID / 密码 / 网络状态）
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -52,7 +49,12 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         key: _childKey,
         width: double.infinity,
         height: double.infinity,
-        child: buildRightPane(context),
+        child: Row(
+          children: [
+            // ⚠️ 左侧已完全移除
+            Expanded(child: buildRightPane(context)),
+          ],
+        ),
       ),
     );
   }
