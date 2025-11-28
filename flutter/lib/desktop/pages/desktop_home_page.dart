@@ -344,7 +344,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
             ],
           ),
           SizedBox(
-            height: 10.0,
+            height: 12.0,
           ),
           if (!isOutgoingOnly)
             Text(
