@@ -92,20 +92,15 @@ class _DesktopTabPageState extends State<DesktopTabPage> {
   @override
   Widget build(BuildContext context) {
     final tabWidget = Container(
-        child: Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.background,
-            body: DesktopTab(
-              controller: tabController,
-              tail: Offstage(
-                offstage: bind.isIncomingOnly() || bind.isDisableSettings(),
-                child: ActionIcon(
-                  message: 'Settings',
-                  icon: IconFont.menu,
-                  onTap: DesktopTabPage.onAddSetting,
-                  isClose: false,
-                ),
-              ),
-            )));
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.background,
+        body: DesktopTab(
+          controller: tabController,
+          tail: SizedBox.shrink(), // 隐藏右上角三杠按钮
+        ),
+      ),
+    );
+
     return isMacOS || kUseCompatibleUiMode
         ? tabWidget
         : Obx(
