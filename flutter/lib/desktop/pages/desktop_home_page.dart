@@ -36,8 +36,6 @@ const borderColor = Color(0xFF2F65BA);
 
 class _DesktopHomePageState extends State<DesktopHomePage>
     with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
-  final _leftPaneScrollController = ScrollController();
-
   @override
   bool get wantKeepAlive => true;
   var systemError = '';
@@ -50,22 +48,20 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   Timer? _updateTimer;
   bool isCardClosed = false;
 
-  final RxBool _editHover = false.obs;
   final RxBool _block = false.obs;
-
   final GlobalKey _childKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final isIncomingOnly = bind.isIncomingOnly();
     return _buildBlock(
-        child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: buildRightPane(context)), // 右侧全屏显示
-      ],
-    ));
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: buildRightPane(context)), // 全屏显示主内容
+        ],
+      ),
+    );
   }
 
   Widget _buildBlock({required Widget child}) {
@@ -73,73 +69,11 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         block: _block, mask: true, use: canBeBlocked, child: child);
   }
 
-  Widget buildLeftPane(BuildContext context) {
+  // 主显示区域 - 包含所有内容
+  Widget buildRightPane(BuildContext context) {
     final isIncomingOnly = bind.isIncomingOnly();
     final isOutgoingOnly = bind.isOutgoingOnly();
-    // 移除原左侧界面所有内容，只保留最小结构和右侧设置按钮逻辑
-    final children = <Widget>[]; 
-    
-    // 原 buildLeftPane 中 if (isIncomingOnly) 里的 OnlineStatusWidget 
-    // 已移动到 buildRightPane 底部统一处理。
-    
-    final textColor = Theme.of(context).textTheme.titleLarge?.color;
-    return ChangeNotifierProvider.value(
-      value: gFFI.serverModel,
-      child: Container(
-        width: isIncomingOnly ? 280.0 : 200.0,
-        color: Theme.of(context).colorScheme.background,
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                SingleChildScrollView(
-                  controller: _leftPaneScrollController,
-                  child: Column(
-                    // _childKey 相关的窗口尺寸逻辑已移动到 buildRightPane
-                    children: children,
-                  ),
-                ),
-                Expanded(child: Container())
-              ],
-            ),
-            if (isOutgoingOnly)
-              Positioned(
-                bottom: 6,
-                left: 12,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: InkWell(
-                    child: Obx(
-                      () => Icon(
-                        Icons.settings,
-                        color: _editHover.value
-                            ? textColor
-                            : Colors.grey.withOpacity(0.5),
-                        size: 22,
-                      ),
-                    ),
-                    onTap: () => {
-                      if (DesktopSettingPage.tabKeys.isNotEmpty)
-                        {
-                          DesktopSettingPage.switch2page(
-                              DesktopSettingPage.tabKeys[0])
-                        }
-                    },
-                    onHover: (value) => _editHover.value = value,
-                  ),
-                ),
-              )
-          ],
-        ),
-      ),
-    );
-  }
 
-  buildRightPane(BuildContext context) {
-    final isIncomingOnly = bind.isIncomingOnly();
-    final isOutgoingOnly = bind.isOutgoingOnly();
-    
-    // 将原 buildLeftPane 的内容移至右侧作为新的主显示内容
     final children = <Widget>[
       if (!isOutgoingOnly) buildPresetPasswordWarning(),
       if (bind.isCustomClient())
@@ -159,7 +93,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
             Obx(() => buildHelpCards(stateGlobal.updateUrl.value))),
         builder: (_, data) {
           if (data.hasData) {
-            // 移动窗口尺寸更新逻辑到这里
+            // IncomingOnly 模式下更新窗口尺寸
             if (isIncomingOnly) {
               if (isInHomePage()) {
                 Future.delayed(Duration(milliseconds: 300), () {
@@ -175,35 +109,33 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       ),
       buildPluginEntry(),
     ];
-    
-    // 替换 ConnectionPage() 并加入 ID/密码内容，底部加入网络状态
+
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
+          // 主内容区域（可滚动）
           Expanded(
             child: SingleChildScrollView(
               child: Column(
-                // _childKey 移至右侧，用于 IncomingOnly 模式下的窗口尺寸计算
-                key: _childKey, 
+                key: _childKey,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: children,
               ),
             ),
           ),
-          // 网络状态显示：原右侧界面顶部移除，只保留最下方的网络状态
+          // 底部网络状态
           Divider(),
           OnlineStatusWidget(
-            onSvcStatusChanged: () {
-              // 保持空实现，因为窗口尺寸更新已在 FutureBuilder 中处理。
-            },
+            onSvcStatusChanged: () {},
           ).marginOnly(bottom: 6, right: 6),
         ],
       ),
     );
   }
 
-  buildIDBoard(BuildContext context) {
+  // ID 显示板块
+  Widget buildIDBoard(BuildContext context) {
     final model = gFFI.serverModel;
     return Container(
       margin: const EdgeInsets.only(left: 20, right: 11),
@@ -270,6 +202,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     );
   }
 
+  // 密码显示板块
   Widget buildPasswordBoard(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: gFFI.serverModel,
@@ -281,47 +214,12 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     );
   }
 
-  Widget buildPopupMenu(BuildContext context) {
-    final textColor = Theme.of(context).textTheme.titleLarge?.color;
-    RxBool hover = false.obs;
-    return InkWell(
-      onTap: DesktopTabPage.onAddSetting,
-      child: Tooltip(
-        message: translate('Settings'),
-        child: Obx(
-          () => CircleAvatar(
-            radius: 15,
-            backgroundColor: hover.value
-                ? Theme.of(context).scaffoldBackgroundColor
-                : Theme.of(context).colorScheme.background,
-            child: Icon(
-              Icons.more_vert_outlined,
-              size: 20,
-              color: hover.value ? textColor : textColor?.withOpacity(0.5),
-            ),
-          ),
-        ),
-      ),
-      onHover: (value) => hover.value = value,
-    );
-  }
-
-  buildPasswordBoard(BuildContext context) {
-    return ChangeNotifierProvider.value(
-        value: gFFI.serverModel,
-        child: Consumer<ServerModel>(
-          builder: (context, model, child) {
-            return buildPasswordBoard2(context, model);
-          },
-        ));
-  }
-
-  buildPasswordBoard2(BuildContext context, ServerModel model) {
+  Widget buildPasswordBoard2(BuildContext context, ServerModel model) {
     RxBool refreshHover = false.obs;
-    RxBool editHover = false.obs;
     final textColor = Theme.of(context).textTheme.titleLarge?.color;
     final showOneTime = model.approveMode != 'click' &&
         model.verificationMethod != kUsePermanentPassword;
+
     return Container(
       margin: EdgeInsets.only(left: 20.0, right: 16, top: 13, bottom: 13),
       child: Row(
@@ -387,12 +285,10 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                         ).marginOnly(right: 8, top: 4),
                     ],
                   ),
-
-                  // 复制按钮（右移两格）
-                  SizedBox(height: 10),
+                  // 复制按钮 - 同时复制 ID 和密码
+                  SizedBox(height: 12),
                   InkWell(
                     onTap: () {
-                      // 同时复制 ID + 一次性密码
                       Clipboard.setData(ClipboardData(
                         text:
                             '${model.serverId.text}\n${model.serverPasswd.text}',
@@ -401,7 +297,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 6),
+                          horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: Color(0xFF2576E3),
                         borderRadius: BorderRadius.circular(8),
@@ -409,7 +305,10 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                       child: Text(
                         translate("复制"),
                         style: const TextStyle(
-                            color: Colors.white, fontSize: 18),
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
@@ -422,7 +321,8 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     );
   }
 
-  buildTip(BuildContext context) {
+  // 提示文本
+  Widget buildTip(BuildContext context) {
     final isOutgoingOnly = bind.isOutgoingOnly();
     return Padding(
       padding:
@@ -462,11 +362,11 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       ),
     );
   }
-  
+
   Widget buildHelpCards(String updateUrl) {
     return Container();
   }
-  
+
   Widget buildInstallCard(String title, String content, String btnText,
       GestureTapCallback onPressed,
       {double marginTop = 20.0,
@@ -618,10 +518,6 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       if (watchIsInputMonitoring) {
         if (bind.mainIsCanInputMonitoring(prompt: false)) {
           watchIsInputMonitoring = false;
-          // Do not notify for now.
-          // Monitoring may not take effect until the process is restarted.
-          // rustDeskWinManager.call(
-          //     WindowType.RemoteDesktop, kWindowDisableGrabKeyboard, '');
           setState(() {});
         }
       }
@@ -738,7 +634,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     WidgetsBinding.instance.addObserver(this);
   }
 
-  _updateWindowSize() {
+  void _updateWindowSize() {
     RenderObject? renderObject = _childKey.currentContext?.findRenderObject();
     if (renderObject == null) {
       return;
@@ -785,6 +681,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   }
 }
 
+// 设置密码对话框
 void setPasswordDialog({VoidCallback? notEmptyCallback}) async {
   final pw = await bind.mainGetPermanentPassword();
   final p0 = TextEditingController(text: pw);
@@ -796,7 +693,6 @@ void setPasswordDialog({VoidCallback? notEmptyCallback}) async {
     DigitValidationRule(),
     UppercaseValidationRule(),
     LowercaseValidationRule(),
-    // SpecialCharacterValidationRule(),
     MinCharactersValidationRule(8),
   ];
   final maxLength = bind.mainMaxEncryptLen();
