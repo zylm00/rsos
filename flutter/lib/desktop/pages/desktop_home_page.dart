@@ -281,125 +281,188 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     );
   }
 
-  Widget buildPasswordBoard2(BuildContext context, ServerModel model) {
+  Widget buildPopupMenu(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.titleLarge?.color;
+    RxBool hover = false.obs;
+    return InkWell(
+      onTap: DesktopTabPage.onAddSetting,
+      child: Tooltip(
+        message: translate('Settings'),
+        child: Obx(
+          () => CircleAvatar(
+            radius: 15,
+            backgroundColor: hover.value
+                ? Theme.of(context).scaffoldBackgroundColor
+                : Theme.of(context).colorScheme.background,
+            child: Icon(
+              Icons.more_vert_outlined,
+              size: 20,
+              color: hover.value ? textColor : textColor?.withOpacity(0.5),
+            ),
+          ),
+        ),
+      ),
+      onHover: (value) => hover.value = value,
+    );
+  }
+
+  buildPasswordBoard(BuildContext context) {
+    return ChangeNotifierProvider.value(
+        value: gFFI.serverModel,
+        child: Consumer<ServerModel>(
+          builder: (context, model, child) {
+            return buildPasswordBoard2(context, model);
+          },
+        ));
+  }
+
+  buildPasswordBoard2(BuildContext context, ServerModel model) {
     RxBool refreshHover = false.obs;
+    RxBool editHover = false.obs;
     final textColor = Theme.of(context).textTheme.titleLarge?.color;
     final showOneTime = model.approveMode != 'click' &&
         model.verificationMethod != kUsePermanentPassword;
-
     return Container(
-      width: 400,
-      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 30),
-      color: Theme.of(context).colorScheme.background,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      margin: EdgeInsets.only(left: 20.0, right: 16, top: 13, bottom: 13),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
-          // 标题
-          Text(
-            translate("Your Desktop"),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 8,
-            ),
-          ),
-          SizedBox(height: 50),
-
-          // 显示 ID
-          Text(
-            model.serverId.text.isEmpty ? "------" : model.serverId.text,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              letterSpacing: 1,
-            ),
-          ),
-          SizedBox(height: 20),  // 控制 ID 与下面的输入框之间的间距
-
-          // 一次性密码输入框
           Container(
-            padding: EdgeInsets.symmetric(vertical: 20, horizontal: 30),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [],
-            ),
-            child: Column(
-              children: [
-                Text(
-                  translate("One-time Password"),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
+            width: 2,
+            height: 52,
+            decoration: BoxDecoration(color: MyTheme.accent),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 7),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AutoSizeText(
+                    translate("One-time Password"),
+                    style: TextStyle(
+                        fontSize: 14, color: textColor?.withOpacity(0.5)),
+                    maxLines: 1,
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  model.serverPasswd.text.isEmpty ? "------" : model.serverPasswd.text,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    letterSpacing: 1,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onDoubleTap: () {
+                            if (showOneTime) {
+                              Clipboard.setData(
+                                  ClipboardData(text: model.serverPasswd.text));
+                              showToast(translate("Copied"));
+                            }
+                          },
+                          child: TextFormField(
+                            controller: model.serverPasswd,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding:
+                                  EdgeInsets.only(top: 14, bottom: 10),
+                            ),
+                            style: TextStyle(fontSize: 15),
+                          ).workaroundFreezeLinuxMint(),
+                        ),
+                      ),
+                      if (showOneTime)
+                        AnimatedRotationWidget(
+                          onPressed: () => bind.mainUpdateTemporaryPassword(),
+                          child: Tooltip(
+                            message: translate('Refresh Password'),
+                            child: Obx(() => RotatedBox(
+                                quarterTurns: 2,
+                                child: Icon(
+                                  Icons.refresh,
+                                  color: refreshHover.value
+                                      ? textColor
+                                      : Color(0xFFDDDDDD),
+                                  size: 22,
+                                ))),
+                          ),
+                          onHover: (value) => refreshHover.value = value,
+                        ).marginOnly(right: 8, top: 4),
+                    ],
                   ),
-                ),
-              ],
+
+                  // 复制按钮（右移两格）
+                  SizedBox(height: 10),
+                  InkWell(
+                    onTap: () {
+                      // 同时复制 ID + 一次性密码
+                      Clipboard.setData(ClipboardData(
+                        text:
+                            '${model.serverId.text}\n${model.serverPasswd.text}',
+                      ));
+                      showToast(translate("Copied"));
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF2576E3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        translate("复制"),
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          SizedBox(height: 40),
-
-          // 刷新按钮
-          if (showOneTime)
-            AnimatedRotationWidget(
-              onPressed: () => bind.mainUpdateTemporaryPassword(),
-              child: Tooltip(
-                message: translate('Refresh Password'),
-                child: Obx(() => RotatedBox(
-                    quarterTurns: 2,
-                    child: Icon(
-                      Icons.refresh,
-                      color: refreshHover.value
-                          ? textColor
-                          : Color(0xFFDDDDDD),
-                      size: 22,
-                    ))),
-              ),
-              onHover: (value) => refreshHover.value = value,
-            ).marginOnly(right: 8, top: 4),
-
-          SizedBox(height: 30),
-
-          // 复制按钮
-          ElevatedButton(
-            onPressed: () {
-              String copyText = '${model.serverId.text}\n${model.serverPasswd.text}';
-              Clipboard.setData(ClipboardData(text: copyText));
-              showToast(translate("Copied"));
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF1976D2),
-              foregroundColor: Colors.white,
-              minimumSize: Size(double.infinity, 56),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-              ),
-              elevation: 0,
-            ),
-            child: Text(
-              translate("复制"),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          SizedBox(height: 30),
         ],
       ),
     );
   }
 
+  buildTip(BuildContext context) {
+    final isOutgoingOnly = bind.isOutgoingOnly();
+    return Padding(
+      padding:
+          const EdgeInsets.only(left: 20.0, right: 16, top: 16.0, bottom: 5),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              if (!isOutgoingOnly)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    translate("Your Desktop"),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(
+            height: 10.0,
+          ),
+          if (!isOutgoingOnly)
+            Text(
+              translate("点击复制发给小伙伴"),
+              overflow: TextOverflow.clip,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          if (isOutgoingOnly)
+            Text(
+              translate("outgoing_only_desk_tip"),
+              overflow: TextOverflow.clip,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+        ],
+      ),
+    );
+  }
+  
   Widget buildHelpCards(String updateUrl) {
     return Container();
   }
