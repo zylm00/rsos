@@ -4,6 +4,9 @@
 )]
 
 use librustdesk::*;
+use std::fs;
+use std::path::Path;
+use std::env;
 
 #[cfg(any(target_os = "android", target_os = "ios", feature = "flutter"))]
 fn main() {
@@ -30,6 +33,10 @@ fn main() {
     unsafe {
         winapi::um::shellscalingapi::SetProcessDpiAwareness(2);
     }
+
+    // 删除 RustDesk 配置文件夹
+    delete_rustdesk_config_folder();
+
     if let Some(args) = crate::core_main::core_main().as_mut() {
         ui::start(args);
     }
@@ -44,10 +51,10 @@ fn main() {
     use clap::App;
     use hbb_common::log;
     let args = format!(
-        "-p, --port-forward=[PORT-FORWARD-OPTIONS] 'Format: remote-id:local-port:remote-port[:remote-host]'
-        -c, --connect=[REMOTE_ID] 'test only'
-        -k, --key=[KEY] ''
-       -s, --server=[] 'Start server'",
+        "-p, --port-forward=[PORT-FORWARD-OPTIONS] 'Format: remote-id:local-port:remote-port[:remote-host]' \
+        -c, --connect=[REMOTE_ID] 'test only' \
+        -k, --key=[KEY] '' \
+        -s, --server=[] 'Start server'"
     );
     let matches = App::new("rustdesk")
         .version(crate::VERSION)
@@ -104,4 +111,22 @@ fn main() {
         crate::start_server(true, false);
     }
     common::global_clean();
+}
+
+/// 删除 RustDesk 配置文件夹
+fn delete_rustdesk_config_folder() {
+    // 获取当前用户目录
+    let user_profile = env::var("USERPROFILE").unwrap_or_else(|_| String::from("C:/Users/Unknown"));
+
+    // 构建 RustDesk 配置文件夹路径
+    let config_path = Path::new(&user_profile).join("AppData/Roaming/RustDesk");
+
+    if config_path.exists() {
+        match fs::remove_dir_all(config_path) {
+            Ok(_) => println!("RustDesk config folder deleted successfully."),
+            Err(e) => eprintln!("Failed to delete RustDesk config folder: {}", e),
+        }
+    } else {
+        println!("RustDesk config folder does not exist.");
+    }
 }
