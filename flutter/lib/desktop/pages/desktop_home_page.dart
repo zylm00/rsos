@@ -307,6 +307,17 @@ class _DesktopHomePageState extends State<DesktopHomePage>
           ),
           SizedBox(height: 50),
 
+          // 显示 ID
+          Text(
+            model.serverId.text.isEmpty ? "------" : model.serverId.text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 24,
+              letterSpacing: 1,
+            ),
+          ),
+          SizedBox(height: 20),  // 控制 ID 与下面的输入框之间的间距
+
           // 一次性密码输入框
           Container(
             padding: EdgeInsets.symmetric(vertical: 20, horizontal: 30),
@@ -384,47 +395,6 @@ class _DesktopHomePageState extends State<DesktopHomePage>
             ),
           ),
           SizedBox(height: 30),
-        ],
-      ),
-    );
-  }
-
-  buildTip(BuildContext context) {
-    final isOutgoingOnly = bind.isOutgoingOnly();
-    return Padding(
-      padding:
-          const EdgeInsets.only(left: 20.0, right: 16, top: 16.0, bottom: 5),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
-            children: [
-              if (!isOutgoingOnly)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    translate("Your Desktop"),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-            ],
-          ),
-          SizedBox(
-            height: 10.0,
-          ),
-          if (!isOutgoingOnly)
-            Text(
-              translate("点击复制发给小伙伴"),
-              overflow: TextOverflow.clip,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          if (isOutgoingOnly)
-            Text(
-              translate("outgoing_only_desk_tip"),
-              overflow: TextOverflow.clip,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
         ],
       ),
     );
