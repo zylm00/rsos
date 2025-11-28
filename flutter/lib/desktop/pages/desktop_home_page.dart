@@ -124,6 +124,15 @@ class _DesktopHomePageState extends State<DesktopHomePage>
               ),
             ),
           ),
+
+          // ⭐ 在这里添加你的文字（以网络状态为间距）
+          Padding(
+            padding: const EdgeInsets.only(left: 20, right: 16, bottom: 6),
+            child: Text(
+              translate("温馨提示：sos版本无安装点关闭即可"),   // ← 你要显示的文字
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),  
           // 底部网络状态
           Divider(),
           OnlineStatusWidget(
@@ -337,7 +346,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    translate("Your Desktop"),
+                    translate("RustDesk桌面"),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
