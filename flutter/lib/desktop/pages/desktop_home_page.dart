@@ -306,7 +306,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: Color(0xFF2576E3),
                         borderRadius: BorderRadius.circular(8),
