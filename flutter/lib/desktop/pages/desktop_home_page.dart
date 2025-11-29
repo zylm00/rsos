@@ -346,7 +346,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    translate("RustDesk桌面"),
+                    translate("你的桌面"),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
