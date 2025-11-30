@@ -777,19 +777,6 @@ class WindowActionPanelState extends State<WindowActionPanel> {
                   },
                   isClose: false,
                 ),
-              if (widget.showMaximize && !isMacOS)
-                Obx(() => ActionIcon(
-                      message: stateGlobal.isMaximized.isTrue
-                          ? 'Restore'
-                          : 'Maximize',
-                      icon: stateGlobal.isMaximized.isTrue
-                          ? IconFont.restore
-                          : IconFont.max,
-                      onTap: bind.isIncomingOnly() && isInHomePage()
-                          ? null
-                          : _toggleMaximize,
-                      isClose: false,
-                    )),
               if (widget.showClose && !isMacOS)
                 ActionIcon(
                   message: 'Close',
