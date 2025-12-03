@@ -346,7 +346,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    translate("你的桌面"),
+                    translate("Your Desktop"),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
@@ -357,7 +357,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
           ),
           if (!isOutgoingOnly)
             Text(
-              translate("点击复制发给小伙伴"),
+              translate("desk_tip"),
               overflow: TextOverflow.clip,
               style: Theme.of(context).textTheme.bodySmall,
             ),
